@@ -1,0 +1,97 @@
+#include <stdlib.h>
+#include <stdio.h>
+//#include <cublas.h>
+#include <time.h>
+#include<iostream>
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <sstream>
+#include <filesystem>
+#include<torch/torch.h>
+using namespace std;
+namespace fs = std::filesystem;
+
+// global variables
+int size_features=1000;
+
+void readFilesFromFolder(const std::string& folderPath, int numFilesToRead) {
+    std::vector<std::string> fileNames;
+    
+    // Iterate over the files in the specified folder
+    for (const auto& entry : fs::directory_iterator(folderPath)) {
+        if (entry.is_regular_file()) {
+            fileNames.push_back(entry.path().string());
+        }
+    }
+
+    // Sort the file names to ensure a consistent order
+    std::sort(fileNames.begin(), fileNames.end());
+
+    // Limit the number of files to read
+    int filesRead = 0;
+    for (const auto& fileName : fileNames) {
+        // Read the file or perform any other desired operation
+        std::cout << "Reading file: " << fileName << std::endl;
+
+        // Increment the count of files read
+        filesRead++;
+
+        // Check if we have reached the specified limit
+        if (filesRead >= numFilesToRead) {
+            break;
+        }
+    }
+
+}
+
+
+
+
+struct GraphConvolution: torch::nn::Module{
+    
+     GraphConvolution(int16_t[size_features] in_features, int16_t[size_features] out_features){
+        Weight = register_parameter("Weight", torch::Tensor({in_features, out_features}), torch::dtype(torch::kFloat32));
+        Bias = register_parameter("Bias", torch::Tensor(out_features), torch::dtype(torch::kFloat32));
+        initial_parameters()
+     }
+
+     torch::Tensor forward(torch::Tensor input, torch::Tensor adj){
+        
+        // transform the features
+        transform = torch::mm(input, Weight);
+        // aggregate the neighbors
+        output = torch::spmm(adj, transform)
+
+        if(Bias.empty()){
+            return output
+        } else {
+            return output + Bias;
+        }
+     }
+
+}
+
+int main(){
+	
+    std::string folderPath = "/Users/sophiayamashita/Desktop/451project/classification-for-twitter/twitter";
+
+    int numFilesToRead = 5;
+
+    readFilesFromFolder(folderPath, numFilesToRead);
+
+    
+    return 0;
+
+	struct timespec start, stop; 
+	double time;
+		
+	if( clock_gettime( CLOCK_REALTIME, &start) == -1 ) { perror( "clock gettime" );}
+	if( clock_gettime( CLOCK_REALTIME, &stop) == -1 ) { perror( "clock gettime" );}	  
+			
+	time = (stop.tv_sec - start.tv_sec)+ (double)(stop.tv_nsec - start.tv_nsec)/1e9;
+	printf("time is %f ns\n", time*1e9);	 
+
+
+}
